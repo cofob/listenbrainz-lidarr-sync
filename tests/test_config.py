@@ -27,6 +27,7 @@ def test_load_config_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert config.artist_add_monitor is MonitorType.LATEST
     assert config.artist_monitor_new_items is NewItemMonitorType.NEW
     assert config.search_for_missing_albums is False
+    assert config.search_wanted_albums is False
     assert config.telegram_bot_token is None
     assert config.telegram_chat_id is None
     assert config.telegram_message_thread_id is None
@@ -43,6 +44,7 @@ def test_load_config_parses_playlist_ids_and_overrides(monkeypatch: pytest.Monke
     monkeypatch.setenv(f"{ENV_PREFIX}ARTIST_ADD_MONITOR", "all")
     monkeypatch.setenv(f"{ENV_PREFIX}ARTIST_MONITOR_NEW_ITEMS", "all")
     monkeypatch.setenv(f"{ENV_PREFIX}SEARCH_FOR_MISSING_ALBUMS", "yes")
+    monkeypatch.setenv(f"{ENV_PREFIX}SEARCH_WANTED_ALBUMS", "yes")
 
     config = load_config_from_env()
 
@@ -50,6 +52,7 @@ def test_load_config_parses_playlist_ids_and_overrides(monkeypatch: pytest.Monke
     assert config.artist_add_monitor is MonitorType.ALL
     assert config.artist_monitor_new_items is NewItemMonitorType.ALL
     assert config.search_for_missing_albums is True
+    assert config.search_wanted_albums is True
 
 
 def test_load_config_parses_telegram_reporting(monkeypatch: pytest.MonkeyPatch) -> None:

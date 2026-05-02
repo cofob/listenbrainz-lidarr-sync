@@ -22,7 +22,10 @@ def test_telegram_reporter_sends_message_to_thread() -> None:
         message_thread_id=42,
     )
 
-    reporter.send_success(SyncStats(playlists_seen=1, tracks_seen=2, albums_marked_wanted=3), dry_run=True)
+    reporter.send_success(
+        SyncStats(playlists_seen=1, tracks_seen=2, albums_marked_wanted=3, album_searches_triggered=1),
+        dry_run=True,
+    )
 
     assert len(requests) == 1
     assert requests[0].url.path == "/bottoken/sendMessage"
@@ -31,6 +34,7 @@ def test_telegram_reporter_sends_message_to_thread() -> None:
     assert payload["message_thread_id"] == 42
     assert "dry run" in payload["text"]
     assert "Albums marked wanted: 3" in payload["text"]
+    assert "Album searches triggered: 1" in payload["text"]
 
 
 def test_format_failure_message_truncates_long_error() -> None:
@@ -49,6 +53,7 @@ def test_format_success_message_includes_stats() -> None:
             albums_resolved=3,
             artists_added=4,
             albums_marked_wanted=5,
+            album_searches_triggered=6,
             albums_skipped_wanted=6,
             albums_skipped_downloaded=7,
             albums_skipped_missing_in_lidarr=8,
@@ -58,4 +63,5 @@ def test_format_success_message_includes_stats() -> None:
 
     assert "ListenBrainz Lidarr sync finished (live)." in message
     assert "Playlists: 1" in message
+    assert "Album searches triggered: 6" in message
     assert "Skipped missing in Lidarr: 8" in message

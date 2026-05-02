@@ -36,9 +36,9 @@ export LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_TITLE_INCLUDE="weekly,recommendation"
 export LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_TITLE_EXCLUDE="archive"
 ```
 
-`LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_TITLE_INCLUDE` selects only the first matching playlist returned by ListenBrainz,
-which is treated as the latest recommendation playlist. Use `LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_MBIDS` for additional
-explicit playlists.
+`LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_TITLE_INCLUDE` selects only the first matching playlist returned by ListenBrainz for
+each comma-separated include term. Those first matches are treated as the latest recommendation playlists. Use
+`LISTENBRAINZ_LIDARR_SYNC_PLAYLIST_MBIDS` for additional explicit playlists.
 
 Optional Lidarr defaults:
 
@@ -50,6 +50,7 @@ export LISTENBRAINZ_LIDARR_SYNC_ARTIST_MONITORED="true"
 export LISTENBRAINZ_LIDARR_SYNC_ARTIST_ADD_MONITOR="latest"
 export LISTENBRAINZ_LIDARR_SYNC_ARTIST_MONITOR_NEW_ITEMS="new"
 export LISTENBRAINZ_LIDARR_SYNC_SEARCH_FOR_MISSING_ALBUMS="false"
+export LISTENBRAINZ_LIDARR_SYNC_SEARCH_WANTED_ALBUMS="false"
 export LISTENBRAINZ_LIDARR_SYNC_INTERVAL_SECONDS="86400"
 ```
 
@@ -95,6 +96,8 @@ uv run listenbrainz-lidarr-sync --dry-run
 - Playlist tracks are resolved from MusicBrainz release MBIDs first, then recording MBIDs as a fallback.
 - Lidarr albums are matched by MusicBrainz release-group MBID.
 - Albums already monitored or already downloaded are skipped.
+- `LISTENBRAINZ_LIDARR_SYNC_SEARCH_WANTED_ALBUMS=true` queues a Lidarr `AlbumSearch` command after a newly wanted
+  album is monitored.
 - Existing artist settings are not changed.
 - New artists are monitored by default and added with Lidarr's `latest` monitor option.
 

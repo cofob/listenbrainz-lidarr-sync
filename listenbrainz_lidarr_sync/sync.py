@@ -113,4 +113,9 @@ class SyncService:
             return replace(stats, albums_skipped_wanted=stats.albums_skipped_wanted + 1)
 
         self._lidarr.mark_album_wanted(lidarr_album)
-        return replace(stats, albums_marked_wanted=stats.albums_marked_wanted + 1)
+        stats = replace(stats, albums_marked_wanted=stats.albums_marked_wanted + 1)
+        if not self._config.search_wanted_albums:
+            return stats
+
+        self._lidarr.search_album(lidarr_album)
+        return replace(stats, album_searches_triggered=stats.album_searches_triggered + 1)

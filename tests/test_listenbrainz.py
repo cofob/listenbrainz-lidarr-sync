@@ -128,3 +128,36 @@ def test_filter_playlists_keeps_only_latest_title_match() -> None:
     )
 
     assert selected == [PlaylistSummary(mbid=latest_mbid, title="Weekly Jams for cofobus, week of 2026-04-27 Mon")]
+
+
+def test_filter_playlists_keeps_latest_match_per_include_term() -> None:
+    latest_jams_mbid = "abdd2153-fb6b-4f20-8980-dbc99d9a010e"
+    latest_exploration_mbid = "fa2ee143-f70f-43e5-9416-011946ec4dce"
+    older_jams_mbid = "4d8d4d21-f0b3-4161-8e06-c5640f8d4a1c"
+    older_exploration_mbid = "5baac78b-a803-49fc-8a8a-a707e2374b26"
+
+    selected = filter_playlists(
+        [
+            PlaylistSummary(mbid=latest_jams_mbid, title="Weekly Jams for cofobus, week of 2026-04-27 Mon"),
+            PlaylistSummary(
+                mbid=latest_exploration_mbid,
+                title="Weekly Exploration for cofobus, week of 2026-04-20 Mon",
+            ),
+            PlaylistSummary(mbid=older_jams_mbid, title="Weekly Jams for cofobus, week of 2026-04-20 Mon"),
+            PlaylistSummary(
+                mbid=older_exploration_mbid,
+                title="Weekly Exploration for cofobus, week of 2026-04-13 Mon",
+            ),
+        ],
+        playlist_mbids=(),
+        title_include=("weekly-jams", "weekly-exploration"),
+        title_exclude=(),
+    )
+
+    assert selected == [
+        PlaylistSummary(mbid=latest_jams_mbid, title="Weekly Jams for cofobus, week of 2026-04-27 Mon"),
+        PlaylistSummary(
+            mbid=latest_exploration_mbid,
+            title="Weekly Exploration for cofobus, week of 2026-04-20 Mon",
+        ),
+    ]

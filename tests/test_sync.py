@@ -121,6 +121,7 @@ def test_sync_adds_missing_artist_and_marks_album_wanted() -> None:
     assert stats.albums_resolved == 1
     assert stats.artists_added == 1
     assert stats.albums_marked_wanted == 1
+    assert stats.album_searches_triggered == 0
 
 
 def test_sync_uses_lidarr_album_title_fast_path_without_musicbrainz_lookup() -> None:
@@ -206,6 +207,93 @@ def test_sync_uses_lidarr_album_title_fast_path_without_musicbrainz_lookup() -> 
     assert stats.albums_marked_wanted == 1
 
 
+def test_sync_triggers_album_search_when_configured() -> None:
+    lidarr_state = {"album_monitored": False, "album_searched": False}
+
+    def listenbrainz_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/playlists/createdfor"):
+            return httpx.Response(
+                200,
+                json={
+                    "playlist": {
+                        "playlists": [
+                            {
+                                "playlist": {
+                                    "title": "Weekly Exploration",
+                                    "identifier": [f"https://listenbrainz.org/playlist/{PLAYLIST_MBID}"],
+                                }
+                            }
+                        ]
+                    }
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "playlist": {
+                    "track": [
+                        {
+                            "title": "A Song",
+                            "identifier": ["https://musicbrainz.org/recording/b1a9c0e9-d987-4042-ae91-78d6a3267d69"],
+                            "release_identifier": [f"https://musicbrainz.org/release/{RELEASE_MBID}"],
+                            "artist_identifiers": [f"https://musicbrainz.org/artist/{ARTIST_MBID}"],
+                        }
+                    ]
+                }
+            },
+        )
+
+    def lidarr_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v1/rootfolder":
+            return httpx.Response(
+                200,
+                json=[{"path": "/music", "defaultQualityProfileId": 1, "defaultMetadataProfileId": 2}],
+            )
+        if request.url.path == "/api/v1/artist" and request.method == "GET":
+            return httpx.Response(200, json=[{"id": 10, "foreignArtistId": ARTIST_MBID, "artistName": "Queen"}])
+        if request.url.path == "/api/v1/album" and request.method == "GET":
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 20,
+                        "foreignAlbumId": RELEASE_GROUP_MBID,
+                        "title": "Album",
+                        "monitored": False,
+                        "statistics": {"trackFileCount": 0},
+                    }
+                ],
+            )
+        if request.url.path == "/api/v1/album/monitor" and request.method == "PUT":
+            lidarr_state["album_monitored"] = True
+            return httpx.Response(202, json={})
+        if request.url.path == "/api/v1/command" and request.method == "POST":
+            payload = json.loads(request.content)
+            assert payload == {"name": "AlbumSearch", "albumIds": [20]}
+            lidarr_state["album_searched"] = True
+            return httpx.Response(200, json={"id": 30, "name": "AlbumSearch"})
+        return httpx.Response(404, json={"path": request.url.path})
+
+    service = SyncService(
+        config=_config(search_wanted_albums=True),
+        listenbrainz=ListenBrainzClient(
+            httpx.Client(base_url="https://api.listenbrainz.org", transport=httpx.MockTransport(listenbrainz_handler)),
+            user="alice",
+        ),
+        musicbrainz=MusicBrainzResolver(_FakeMusicBrainzLookup()),
+        lidarr=LidarrClient(
+            httpx.Client(base_url="http://lidarr:8686", transport=httpx.MockTransport(lidarr_handler)),
+            config=_config(search_wanted_albums=True),
+        ),
+    )
+
+    stats = service.run_once()
+
+    assert lidarr_state == {"album_monitored": True, "album_searched": True}
+    assert stats.albums_marked_wanted == 1
+    assert stats.album_searches_triggered == 1
+
+
 class _FakeMusicBrainzLookup:
     def get_release_by_id(self, mbid: str, *, includes: Sequence[str]) -> Mapping[str, JsonValue]:
         assert mbid == RELEASE_MBID
@@ -231,7 +319,7 @@ class _UnusedMusicBrainzLookup:
         raise AssertionError(f"MusicBrainz recording lookup should not be used for {mbid} with {includes}")
 
 
-def _config() -> Config:
+def _config(*, search_wanted_albums: bool = False) -> Config:
     return Config(
         lidarr_url="http://lidarr:8686",
         lidarr_api_key="secret",
@@ -248,6 +336,7 @@ def _config() -> Config:
         artist_add_monitor=MonitorType.LATEST,
         artist_monitor_new_items=NewItemMonitorType.NEW,
         search_for_missing_albums=False,
+        search_wanted_albums=search_wanted_albums,
         telegram_bot_token=None,
         telegram_chat_id=None,
         telegram_message_thread_id=None,

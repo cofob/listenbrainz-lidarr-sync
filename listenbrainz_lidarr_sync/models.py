@@ -56,6 +56,7 @@ class SyncStats:
     albums_resolved: int = 0
     artists_added: int = 0
     albums_marked_wanted: int = 0
+    album_searches_triggered: int = 0
     albums_skipped_wanted: int = 0
     albums_skipped_downloaded: int = 0
     albums_skipped_missing_in_lidarr: int = 0

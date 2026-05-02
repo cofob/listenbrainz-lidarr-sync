@@ -44,6 +44,7 @@ class Config:
     artist_add_monitor: MonitorType
     artist_monitor_new_items: NewItemMonitorType
     search_for_missing_albums: bool
+    search_wanted_albums: bool
     telegram_bot_token: str | None
     telegram_chat_id: str | None
     telegram_message_thread_id: int | None
@@ -175,6 +176,7 @@ def load_config_from_env() -> Config:
             default=NewItemMonitorType.NEW,
         ),
         search_for_missing_albums=get_bool_env("SEARCH_FOR_MISSING_ALBUMS", default=False),
+        search_wanted_albums=get_bool_env("SEARCH_WANTED_ALBUMS", default=False),
         telegram_bot_token=get_optional_str_env("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=get_optional_str_env("TELEGRAM_CHAT_ID"),
         telegram_message_thread_id=get_optional_int_env("TELEGRAM_MESSAGE_THREAD_ID"),

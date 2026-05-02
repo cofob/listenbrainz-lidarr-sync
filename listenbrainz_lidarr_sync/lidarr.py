@@ -149,6 +149,13 @@ class LidarrClient:
         response = self._client.put("/api/v1/album/monitor", json={"albumIds": [album.id], "monitored": True})
         response.raise_for_status()
 
+    def search_album(self, album: LidarrAlbum) -> None:
+        if self._dry_run:
+            log.info("Dry run: would trigger Lidarr album search for %s", album.foreign_album_id)
+            return
+        response = self._client.post("/api/v1/command", json={"name": "AlbumSearch", "albumIds": [album.id]})
+        response.raise_for_status()
+
     def ensure_artist_for_album(
         self,
         album: ResolvedAlbum,

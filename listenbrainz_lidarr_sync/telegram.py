@@ -65,6 +65,7 @@ def format_success_message(stats: SyncStats, *, dry_run: bool) -> str:
         f"Resolved albums: {stats.albums_resolved}\n"
         f"Artists added: {stats.artists_added}\n"
         f"Albums marked wanted: {stats.albums_marked_wanted}\n"
+        f"Album searches triggered: {stats.album_searches_triggered}\n"
         f"Skipped wanted: {stats.albums_skipped_wanted}\n"
         f"Skipped downloaded: {stats.albums_skipped_downloaded}\n"
         f"Skipped missing in Lidarr: {stats.albums_skipped_missing_in_lidarr}"

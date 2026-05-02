@@ -82,15 +82,16 @@ def filter_playlists(
 
     selected: list[PlaylistSummary] = []
     seen: set[str] = set()
-    selected_title_match = False
+    selected_include_terms: set[str] = set()
+    selected_default_match = False
     for playlist in playlists:
         if playlist.mbid in seen:
             continue
         title = playlist.title.casefold()
         title_slug = _title_slug(title)
         explicit_match = playlist.mbid in explicit
-        include_match = not include_terms or any(
-            _term_matches_title(term, title=title, title_slug=title_slug) for term in include_terms
+        matched_include_terms = tuple(
+            term for term in include_terms if _term_matches_title(term, title=title, title_slug=title_slug)
         )
         exclude_match = any(_term_matches_title(term, title=title, title_slug=title_slug) for term in exclude_terms)
         if exclude_match:
@@ -99,10 +100,15 @@ def filter_playlists(
             selected.append(playlist)
             seen.add(playlist.mbid)
             continue
-        if include_match and (not include_terms or not selected_title_match):
+        if include_terms and any(term not in selected_include_terms for term in matched_include_terms):
             selected.append(playlist)
             seen.add(playlist.mbid)
-            selected_title_match = True
+            selected_include_terms.update(matched_include_terms)
+            continue
+        if not include_terms and not selected_default_match:
+            selected.append(playlist)
+            seen.add(playlist.mbid)
+            selected_default_match = True
     selected.extend([PlaylistSummary(mbid=mbid, title=mbid) for mbid in playlist_mbids if mbid not in seen])
     return selected
 

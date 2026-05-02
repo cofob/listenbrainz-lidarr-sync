@@ -53,12 +53,13 @@ def run_sync(config: Config, *, dry_run: bool) -> SyncStats:
     stats = service.run_once()
     log.info(
         "Finished sync: playlists=%s tracks=%s resolved_albums=%s artists_added=%s albums_marked_wanted=%s "
-        "skipped_wanted=%s skipped_downloaded=%s skipped_missing_in_lidarr=%s",
+        "album_searches_triggered=%s skipped_wanted=%s skipped_downloaded=%s skipped_missing_in_lidarr=%s",
         stats.playlists_seen,
         stats.tracks_seen,
         stats.albums_resolved,
         stats.artists_added,
         stats.albums_marked_wanted,
+        stats.album_searches_triggered,
         stats.albums_skipped_wanted,
         stats.albums_skipped_downloaded,
         stats.albums_skipped_missing_in_lidarr,
