@@ -15,7 +15,7 @@ listenbrainz-lidarr-sync = "listenbrainz_lidarr_sync.__main__:main"
 [dependency-groups]
 dev = [
     "mypy~=1.15",
-    "pytest~=8.3",
+    "pytest~=9.0",
     "ruff~=0.11",
 ]
 
