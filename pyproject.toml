@@ -1,0 +1,157 @@
+[project]
+name = "listenbrainz-lidarr-sync"
+version = "0.1.0"
+description = "Import ListenBrainz recommendation playlists into Lidarr."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx==0.28.1",
+    "musicbrainzngs==0.7.1",
+]
+
+[project.scripts]
+listenbrainz-lidarr-sync = "listenbrainz_lidarr_sync.__main__:main"
+
+[dependency-groups]
+dev = [
+    "mypy~=1.15",
+    "pytest~=8.3",
+    "ruff~=0.11",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["listenbrainz_lidarr_sync"]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [".opencode"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "N",
+    "I",
+    "FLY",
+    "PERF",
+    "PGH",
+    "PLC",
+    "PLE",
+    "PLW",
+    "PLR",
+    "UP",
+    "FURB",
+    "RUF",
+    "TRY",
+    "B",
+    "YTT",
+    "ANN",
+    "S",
+    "FBT",
+    "A",
+    "COM",
+    "C4",
+    "DTZ",
+    "INT",
+    "ISC",
+    "ICN",
+    "LOG",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "PYI",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SIM",
+    "SLOT",
+    "TID",
+    "ARG",
+    "PTH",
+]
+ignore = [
+    "ANN401",
+    "COM812",
+    "RUF012",
+    "S101",
+    "TRY003",
+    "TRY301",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["listenbrainz_lidarr_sync"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "F401",
+    "PLC0414",
+]
+"tests/*.py" = [
+    "ARG002",
+    "PLR0911",
+    "PLR2004",
+    "S106",
+]
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-returns = 7
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+ignore-fully-untyped = true
+suppress-none-returning = true
+suppress-dummy-args = true
+
+[tool.ruff.lint.flake8-builtins]
+builtins-strict-checking = false
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+pretty = true
+allow_redefinition = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+exclude = '''(?x)(
+    dist/.*|
+    venv/.*|
+    \.venv/.*
+)'''
+files = ["listenbrainz_lidarr_sync", "tests"]
+ignore_errors = false
+ignore_missing_imports = true
+implicit_reexport = true
+local_partial_types = true
+no_implicit_optional = true
+show_error_codes = true
+strict = true
+strict_equality = true
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = false
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
