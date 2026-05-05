@@ -173,7 +173,7 @@ def load_config_from_env() -> Config:
         artist_add_monitor=get_monitor_type_env("ARTIST_ADD_MONITOR", default=MonitorType.LATEST),
         artist_monitor_new_items=get_new_item_monitor_type_env(
             "ARTIST_MONITOR_NEW_ITEMS",
-            default=NewItemMonitorType.NEW,
+            default=NewItemMonitorType.NONE,
         ),
         search_for_missing_albums=get_bool_env("SEARCH_FOR_MISSING_ALBUMS", default=False),
         search_wanted_albums=get_bool_env("SEARCH_WANTED_ALBUMS", default=False),

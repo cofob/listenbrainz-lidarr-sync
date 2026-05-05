@@ -48,7 +48,7 @@ export LISTENBRAINZ_LIDARR_SYNC_LIDARR_QUALITY_PROFILE_ID="1"
 export LISTENBRAINZ_LIDARR_SYNC_LIDARR_METADATA_PROFILE_ID="1"
 export LISTENBRAINZ_LIDARR_SYNC_ARTIST_MONITORED="true"
 export LISTENBRAINZ_LIDARR_SYNC_ARTIST_ADD_MONITOR="latest"
-export LISTENBRAINZ_LIDARR_SYNC_ARTIST_MONITOR_NEW_ITEMS="new"
+export LISTENBRAINZ_LIDARR_SYNC_ARTIST_MONITOR_NEW_ITEMS="none"
 export LISTENBRAINZ_LIDARR_SYNC_SEARCH_FOR_MISSING_ALBUMS="false"
 export LISTENBRAINZ_LIDARR_SYNC_SEARCH_WANTED_ALBUMS="false"
 export LISTENBRAINZ_LIDARR_SYNC_INTERVAL_SECONDS="86400"
@@ -98,8 +98,9 @@ uv run listenbrainz-lidarr-sync --dry-run
 - Albums already monitored or already downloaded are skipped.
 - `LISTENBRAINZ_LIDARR_SYNC_SEARCH_WANTED_ALBUMS=true` queues a Lidarr `AlbumSearch` command after a newly wanted
   album is monitored.
-- Existing artist settings are not changed.
-- New artists are monitored by default and added with Lidarr's `latest` monitor option.
+- Existing artist monitoring settings are not changed.
+- New artists use the configurable `ARTIST_*` settings. By default they are added as monitored artists, with only
+  Lidarr's `latest` album monitored and future new albums not automatically monitored.
 
 The Lidarr OpenAPI reference used while implementing the client is checked in at `schemas/lidarr.openapi.json`.
 

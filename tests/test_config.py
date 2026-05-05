@@ -25,7 +25,7 @@ def test_load_config_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert config.interval_seconds == 86_400
     assert config.artist_monitored is True
     assert config.artist_add_monitor is MonitorType.LATEST
-    assert config.artist_monitor_new_items is NewItemMonitorType.NEW
+    assert config.artist_monitor_new_items is NewItemMonitorType.NONE
     assert config.search_for_missing_albums is False
     assert config.search_wanted_albums is False
     assert config.telegram_bot_token is None

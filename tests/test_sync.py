@@ -77,7 +77,10 @@ def test_sync_adds_missing_artist_and_marks_album_wanted() -> None:
             assert payload["rootFolderPath"] == "/music"
             assert payload["qualityProfileId"] == 1
             assert payload["metadataProfileId"] == 2
+            assert payload["monitored"] is True
+            assert payload["monitorNewItems"] == "none"
             assert payload["addOptions"]["monitor"] == "latest"
+            assert payload["addOptions"]["monitored"] is True
             lidarr_state["artist_added"] = True
             return httpx.Response(200, json={"id": 10, "foreignArtistId": ARTIST_MBID, "artistName": "Queen"})
         if request.url.path == "/api/v1/album" and request.method == "GET":
@@ -122,6 +125,107 @@ def test_sync_adds_missing_artist_and_marks_album_wanted() -> None:
     assert stats.artists_added == 1
     assert stats.albums_marked_wanted == 1
     assert stats.album_searches_triggered == 0
+
+
+def test_sync_does_not_modify_existing_artist_monitoring_settings() -> None:
+    lidarr_state = {"artist_writes": 0, "album_monitored": False}
+
+    def listenbrainz_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/playlists/createdfor"):
+            return httpx.Response(
+                200,
+                json={
+                    "playlist": {
+                        "playlists": [
+                            {
+                                "playlist": {
+                                    "title": "Weekly Exploration",
+                                    "identifier": [f"https://listenbrainz.org/playlist/{PLAYLIST_MBID}"],
+                                }
+                            }
+                        ]
+                    }
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "playlist": {
+                    "track": [
+                        {
+                            "title": "A Song",
+                            "identifier": ["https://musicbrainz.org/recording/b1a9c0e9-d987-4042-ae91-78d6a3267d69"],
+                            "release_identifier": [f"https://musicbrainz.org/release/{RELEASE_MBID}"],
+                            "artist_identifiers": [f"https://musicbrainz.org/artist/{ARTIST_MBID}"],
+                        }
+                    ]
+                }
+            },
+        )
+
+    def lidarr_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v1/rootfolder":
+            return httpx.Response(
+                200,
+                json=[{"path": "/music", "defaultQualityProfileId": 1, "defaultMetadataProfileId": 2}],
+            )
+        if request.url.path == "/api/v1/artist" and request.method == "GET":
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 10,
+                        "foreignArtistId": ARTIST_MBID,
+                        "artistName": "Queen",
+                        "monitored": False,
+                        "monitorNewItems": "all",
+                    }
+                ],
+            )
+        if request.url.path == "/api/v1/artist":
+            lidarr_state["artist_writes"] += 1
+            return httpx.Response(500, json={"error": "existing artist must not be modified"})
+        if request.url.path == "/api/v1/album" and request.method == "GET":
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 20,
+                        "foreignAlbumId": RELEASE_GROUP_MBID,
+                        "title": "Album",
+                        "monitored": False,
+                        "statistics": {"trackFileCount": 0},
+                    }
+                ],
+            )
+        if request.url.path == "/api/v1/album/monitor" and request.method == "PUT":
+            lidarr_state["album_monitored"] = True
+            return httpx.Response(202, json={})
+        return httpx.Response(404, json={"path": request.url.path})
+
+    config = _config(
+        artist_monitored=True,
+        artist_add_monitor=MonitorType.LATEST,
+        artist_monitor_new_items=NewItemMonitorType.NONE,
+    )
+    service = SyncService(
+        config=config,
+        listenbrainz=ListenBrainzClient(
+            httpx.Client(base_url="https://api.listenbrainz.org", transport=httpx.MockTransport(listenbrainz_handler)),
+            user="alice",
+        ),
+        musicbrainz=MusicBrainzResolver(_FakeMusicBrainzLookup()),
+        lidarr=LidarrClient(
+            httpx.Client(base_url="http://lidarr:8686", transport=httpx.MockTransport(lidarr_handler)),
+            config=config,
+        ),
+    )
+
+    stats = service.run_once()
+
+    assert lidarr_state == {"artist_writes": 0, "album_monitored": True}
+    assert stats.artists_added == 0
+    assert stats.albums_marked_wanted == 1
 
 
 def test_sync_uses_lidarr_album_title_fast_path_without_musicbrainz_lookup() -> None:
@@ -319,7 +423,13 @@ class _UnusedMusicBrainzLookup:
         raise AssertionError(f"MusicBrainz recording lookup should not be used for {mbid} with {includes}")
 
 
-def _config(*, search_wanted_albums: bool = False) -> Config:
+def _config(
+    *,
+    search_wanted_albums: bool = False,
+    artist_monitored: bool = True,
+    artist_add_monitor: MonitorType = MonitorType.LATEST,
+    artist_monitor_new_items: NewItemMonitorType = NewItemMonitorType.NONE,
+) -> Config:
     return Config(
         lidarr_url="http://lidarr:8686",
         lidarr_api_key="secret",
@@ -332,9 +442,9 @@ def _config(*, search_wanted_albums: bool = False) -> Config:
         lidarr_root_folder_path=None,
         lidarr_quality_profile_id=None,
         lidarr_metadata_profile_id=None,
-        artist_monitored=True,
-        artist_add_monitor=MonitorType.LATEST,
-        artist_monitor_new_items=NewItemMonitorType.NEW,
+        artist_monitored=artist_monitored,
+        artist_add_monitor=artist_add_monitor,
+        artist_monitor_new_items=artist_monitor_new_items,
         search_for_missing_albums=False,
         search_wanted_albums=search_wanted_albums,
         telegram_bot_token=None,
